@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "383388078416",
+    "project_id": "instagram-lite-vikas",
+    "storage_bucket": "instagram-lite-vikas.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:383388078416:android:fcf2ac081125ed9f9b9c55",
+        "android_client_info": {
+          "package_name": "com.vikas.instagram_lite"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "383388078416-i5t1bd3fat6469t58vnurk7npmagi48d.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.vikas.instagram_lite",
+            "certificate_hash": "f5741cc0e95a212b81aa20c22445280cdb36cdb6"
+          }
+        },
+        {
+          "client_id": "383388078416-rspimrbc8ufefmthres5086dpol9hg99.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDZqh2K2nHNzMMvghaIwYoretvRBuFx6x0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "383388078416-rspimrbc8ufefmthres5086dpol9hg99.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "383388078416-9dmfqvcp0mkqvf04rv6rfge9drskuva3.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.vikas.instagramLite"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
