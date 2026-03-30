@@ -184,7 +184,7 @@ Contributions are welcome!
 **Vikas Pant**
 - GitHub: [@your-username](https://github.com/11iamvikas)
 - LinkedIn: [Add your LinkedIn](https://www.linkedin.com/in/vikas-pant-0a4945247/)
-- Email: vikaspant6969@gmail.com
+- Email: vikaspant990@gmail.com
 
 ---
 
