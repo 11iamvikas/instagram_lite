@@ -8,6 +8,7 @@ import '../../features/feed/screens/post_detail_screen.dart';
 import '../../features/profile/screens/complete_profile_screen.dart';
 import '../../features/profile/screens/profile_screen.dart';
 import '../../features/chat/screens/chat_list_screen.dart';
+import '../../features/chat/screens/new_chat_screen.dart';
 import '../../features/chat/screens/chat_screen.dart';
 import '../../features/create_post/screens/create_post_screen.dart';
 import '../../features/search/screens/search_screen.dart';
@@ -69,6 +70,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             ChatScreen(targetUid: state.pathParameters['uid']!),
       ),
       GoRoute(path: '/chats', builder: (_, __) => const ChatListScreen()),
+      GoRoute(path: '/chats/new', builder: (_, __) => const NewChatScreen()),
     ],
   );
 });

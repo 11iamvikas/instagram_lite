@@ -24,7 +24,7 @@ class ChatListScreen extends ConsumerWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.edit_outlined),
-            onPressed: () {},
+            onPressed: () => context.push('/chats/new'),
           ),
         ],
       ),
@@ -37,17 +37,26 @@ class ChatListScreen extends ConsumerWidget {
           }
           final chats = snap.data!.docs;
           if (chats.isEmpty) {
-            return const Center(
+            return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.chat_bubble_outline, size: 64, color: Colors.grey),
-                  SizedBox(height: 12),
-                  Text('No messages yet',
-                      style: TextStyle(color: Colors.grey, fontSize: 16)),
-                  SizedBox(height: 4),
-                  Text('Start a conversation by visiting a profile',
+                  const Icon(Icons.chat_bubble_outline,
+                      size: 64, color: Colors.grey),
+                  const SizedBox(height: 12),
+                  const Text('Your DM is Empty',
+                      style: TextStyle(
+                          color: Colors.grey,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600)),
+                  const SizedBox(height: 4),
+                  const Text('Start a conversation by searching a username',
                       style: TextStyle(color: Colors.grey, fontSize: 13)),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () => context.push('/chats/new'),
+                    child: const Text('New chat'),
+                  ),
                 ],
               ),
             );

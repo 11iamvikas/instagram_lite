@@ -264,7 +264,11 @@ class _ProfileHeader extends ConsumerWidget {
                         if (isFollowing) {
                           userRepo.unfollowUser(currentUser.uid, user.uid);
                         } else {
-                          userRepo.followUser(currentUser.uid, user.uid);
+                          userRepo.followUser(
+                            currentUid: currentUser.uid,
+                            targetUid: user.uid,
+                            fromUsername: currentUser.username,
+                          );
                         }
                       },
                       style: ElevatedButton.styleFrom(
@@ -371,15 +375,46 @@ class _PostsGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     if (uid.isEmpty) return const SizedBox.shrink();
 
-    return StreamBuilder(
-      stream: FirebaseFirestore.instance
-          .collection('posts')
-          .where('uid', isEqualTo: uid)
-          .orderBy('createdAt', descending: true)
-          .snapshots(),
+    final orderedStream = FirebaseFirestore.instance
+        .collection('posts')
+        .where('uid', isEqualTo: uid)
+        .orderBy('createdAt', descending: true)
+        .snapshots();
+
+    final fallbackStream = FirebaseFirestore.instance
+        .collection('posts')
+        .where('uid', isEqualTo: uid)
+        .snapshots();
+
+    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+      stream: orderedStream,
       builder: (context, snap) {
         if (snap.hasError) {
-          return const SizedBox.shrink();
+          // This usually happens when Firestore needs a composite index for
+          // `where(uid) + orderBy(createdAt)`. Fall back to an unordered query
+          // and sort client-side so posts don't "disappear".
+          return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+            stream: fallbackStream,
+            builder: (context, fbSnap) {
+              if (fbSnap.hasError) {
+                return const SizedBox(
+                  height: 120,
+                  child: Center(child: Text('Could not load posts')),
+                );
+              }
+              if (!fbSnap.hasData) {
+                return const SizedBox(
+                  height: 200,
+                  child: Center(child: CircularProgressIndicator()),
+                );
+              }
+              final List<PostModel> posts = fbSnap.data!.docs
+                  .map((d) => PostModel.fromMap(d.data()))
+                  .toList();
+              posts.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+              return _PostsGridBody(posts: posts);
+            },
+          );
         }
 
         if (!snap.hasData) {
@@ -389,62 +424,69 @@ class _PostsGrid extends StatelessWidget {
           );
         }
 
-        final posts = (snap.data! as dynamic).docs
-            .map((d) => PostModel.fromMap(d.data() as Map<String, dynamic>))
-            .toList();
+        final List<PostModel> posts =
+            snap.data!.docs.map((d) => PostModel.fromMap(d.data())).toList();
+        return _PostsGridBody(posts: posts);
+      },
+    );
+  }
+}
 
-        if (posts.isEmpty) {
-          return const SizedBox(
-            height: 300,
-            child: Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.camera_alt_outlined, size: 64, color: Colors.grey),
-                  SizedBox(height: 12),
-                  Text(
-                    'No Posts Yet',
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  SizedBox(height: 4),
-                  Text(
-                    'Start sharing your moments',
-                    style: TextStyle(color: Colors.grey),
-                  ),
-                ],
-              ),
-            ),
-          );
-        }
+class _PostsGridBody extends StatelessWidget {
+  final List<PostModel> posts;
+  const _PostsGridBody({required this.posts});
 
-        // Posts grid
-        return GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 3,
-            crossAxisSpacing: 2,
-            mainAxisSpacing: 2,
-          ),
-          itemCount: posts.length,
-          itemBuilder: (context, index) {
-            final post = posts[index];
-            return GestureDetector(
-              onTap: () => context.push('/post/${post.postId}'),
-              child: CachedNetworkImage(
-                imageUrl: post.mediaUrl,
-                fit: BoxFit.cover,
-                placeholder: (_, __) => Container(color: Colors.grey.shade200),
-                errorWidget: (_, __, ___) => Container(
-                  color: Colors.grey.shade200,
-                  child: const Icon(Icons.broken_image, color: Colors.grey),
+  @override
+  Widget build(BuildContext context) {
+    if (posts.isEmpty) {
+      return const SizedBox(
+        height: 300,
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.camera_alt_outlined, size: 64, color: Colors.grey),
+              SizedBox(height: 12),
+              Text(
+                'No Posts Yet',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
-            );
-          },
+              SizedBox(height: 4),
+              Text(
+                'Start sharing your moments',
+                style: TextStyle(color: Colors.grey),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        crossAxisSpacing: 2,
+        mainAxisSpacing: 2,
+      ),
+      itemCount: posts.length,
+      itemBuilder: (context, index) {
+        final post = posts[index];
+        return GestureDetector(
+          onTap: () => context.push('/post/${post.postId}'),
+          child: CachedNetworkImage(
+            imageUrl: post.mediaUrl,
+            fit: BoxFit.cover,
+            placeholder: (_, __) => Container(color: Colors.grey.shade200),
+            errorWidget: (_, __, ___) => Container(
+              color: Colors.grey.shade200,
+              child: const Icon(Icons.broken_image, color: Colors.grey),
+            ),
+          ),
         );
       },
     );

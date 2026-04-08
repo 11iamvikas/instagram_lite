@@ -37,7 +37,26 @@ final currentUserProvider = StreamProvider<UserModel?>((ref) {
       return ref
           .read(userRepositoryProvider)
           .userStream(firebaseUser.uid)
-          .map((u) => u ?? fallback);
+          .asyncMap((u) async {
+        final user = u ?? fallback;
+
+        // If Firestore user doc is missing the Google photoUrl, persist it so
+        // other users also see the profile photo.
+        final googlePhoto = firebaseUser.photoURL ?? '';
+        if (googlePhoto.isNotEmpty && user.photoUrl.trim().isEmpty) {
+          try {
+            await ref.read(userRepositoryProvider).updateProfile(
+                  uid: firebaseUser.uid,
+                  photoUrl: googlePhoto,
+                );
+          } catch (_) {
+            // ignore
+          }
+          return user.copyWith(photoUrl: googlePhoto);
+        }
+
+        return user;
+      });
     },
   );
 });

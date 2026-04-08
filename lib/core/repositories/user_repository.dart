@@ -2,6 +2,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/user_model.dart';
+import '../services/notification_service.dart';
 
 class UserRepository {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -48,7 +49,11 @@ class UserRepository {
     });
   }
 
-  Future<void> followUser(String currentUid, String targetUid) async {
+  Future<void> followUser({
+    required String currentUid,
+    required String targetUid,
+    required String fromUsername,
+  }) async {
     if (currentUid.isEmpty || targetUid.isEmpty) return;
     try {
       final batch = _firestore.batch();
@@ -59,6 +64,18 @@ class UserRepository {
         'followers': FieldValue.arrayUnion([currentUid]),
       });
       await batch.commit();
+
+      if (currentUid != targetUid) {
+        await NotificationService.sendNotification(
+          targetUid: targetUid,
+          title: 'New follower',
+          body: '$fromUsername started following you',
+          data: {
+            'type': 'follow',
+            'fromUid': currentUid,
+          },
+        );
+      }
     } catch (e) {
       // ignore
     }

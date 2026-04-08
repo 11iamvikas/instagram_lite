@@ -52,10 +52,6 @@ class NotificationService {
     required String body,
     Map<String, String>? data,
   }) async {
-    // Get target user's FCM tokens
-    final doc = await _firestore.collection('users').doc(targetUid).get();
-    final tokens = List<String>.from(doc.data()?['fcmTokens'] ?? []);
-
     // Save notification to Firestore
     await _firestore.collection('notifications').add({
       'uid': targetUid,

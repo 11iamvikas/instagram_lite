@@ -73,6 +73,17 @@ class AuthRepository {
     final user = userCredential.user!;
 
     try {
+      // Always persist Google profile basics so profile photo shows for everyone.
+      await _firestore.collection('users').doc(user.uid).set(
+        {
+          'uid': user.uid,
+          'email': user.email ?? '',
+          'displayName': user.displayName ?? 'User',
+          'photoUrl': user.photoURL ?? '',
+        },
+        SetOptions(merge: true),
+      );
+
       final doc = await _firestore.collection('users').doc(user.uid).get();
 
       if (!doc.exists) {

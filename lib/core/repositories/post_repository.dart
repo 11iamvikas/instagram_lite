@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 import '../models/post_model.dart';
 import '../services/cloudinary_service.dart';
+import '../services/notification_service.dart';
 //import '../models/comment_model.dart';
 
 class PostRepository {
@@ -89,6 +90,34 @@ class PostRepository {
           ? FieldValue.arrayRemove([userId])
           : FieldValue.arrayUnion([userId]),
     });
+
+    // Activity notification
+    try {
+      // Only notify on "like" (not on unlike)
+      if (isLiked) return;
+
+      final postDoc = await _firestore.collection('posts').doc(postId).get();
+      final postData = postDoc.data();
+      if (postData == null) return;
+      final ownerUid = postData['uid'] as String? ?? '';
+      if (ownerUid.isEmpty || ownerUid == userId) return;
+
+      final likerDoc = await _firestore.collection('users').doc(userId).get();
+      final likerName = likerDoc.data()?['username'] as String? ?? 'Someone';
+
+      await NotificationService.sendNotification(
+        targetUid: ownerUid,
+        title: 'New like',
+        body: '$likerName liked your post',
+        data: {
+          'type': 'like',
+          'fromUid': userId,
+          'postId': postId,
+        },
+      );
+    } catch (_) {
+      // ignore notification failures
+    }
   }
 
   Future<void> deletePost(String postId, String uid) async {
@@ -108,6 +137,14 @@ class PostRepository {
     required String userPhotoUrl,
     required String text,
   }) async {
+    String ownerUid = '';
+    try {
+      final postDoc = await _firestore.collection('posts').doc(postId).get();
+      ownerUid = postDoc.data()?['uid'] as String? ?? '';
+    } catch (_) {
+      ownerUid = '';
+    }
+
     final commentId = const Uuid().v4();
     final batch = _firestore.batch();
 
@@ -131,6 +168,26 @@ class PostRepository {
       'commentsCount': FieldValue.increment(1),
     });
     await batch.commit();
+
+    // Activity notification
+    try {
+      if (ownerUid.isNotEmpty && ownerUid != uid) {
+        final shortText =
+            text.trim().length > 60 ? '${text.trim().substring(0, 60)}…' : text;
+        await NotificationService.sendNotification(
+          targetUid: ownerUid,
+          title: 'New comment',
+          body: '$username: $shortText',
+          data: {
+            'type': 'comment',
+            'fromUid': uid,
+            'postId': postId,
+          },
+        );
+      }
+    } catch (_) {
+      // ignore notification failures
+    }
   }
 
   Stream<QuerySnapshot> commentsStream(String postId) => _firestore
