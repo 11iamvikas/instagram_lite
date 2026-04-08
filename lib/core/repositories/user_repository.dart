@@ -6,6 +6,25 @@ import '../models/user_model.dart';
 class UserRepository {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
+  Future<bool> isUsernameAvailable(String username, {String? excludeUid}) async {
+    final normalized = username.trim().toLowerCase();
+    if (normalized.isEmpty) return false;
+    try {
+      final snap = await _firestore
+          .collection('users')
+          .where('username', isEqualTo: normalized)
+          .limit(1)
+          .get();
+      if (snap.docs.isEmpty) return true;
+
+      if (excludeUid == null) return false;
+      final existing = snap.docs.first.data();
+      return existing['uid'] == excludeUid;
+    } catch (e) {
+      return false;
+    }
+  }
+
   Future<UserModel?> getUserById(String uid) async {
     if (uid.isEmpty) return null;
     try {
@@ -62,18 +81,61 @@ class UserRepository {
   }
 
   Future<List<UserModel>> searchUsers(String query) async {
-    if (query.isEmpty) return [];
+    final normalized = query.trim().toLowerCase();
+    if (normalized.isEmpty) return [];
     try {
       final snapshot = await _firestore
           .collection('users')
-          .where('username', isGreaterThanOrEqualTo: query)
-          .where('username', isLessThanOrEqualTo: '$query\uf8ff')
+          .where('username', isGreaterThanOrEqualTo: normalized)
+          .where('username', isLessThanOrEqualTo: '$normalized\uf8ff')
           .limit(20)
           .get();
       return snapshot.docs.map((d) => UserModel.fromMap(d.data())).toList();
     } catch (e) {
       return [];
     }
+  }
+
+  Future<void> completeProfile({
+    required String uid,
+    required String username,
+    required String phoneNumber,
+    required int age,
+    String bio = '',
+  }) async {
+    final normalizedUsername = username.trim().toLowerCase();
+    if (uid.isEmpty) {
+      throw Exception('Invalid user');
+    }
+    if (!RegExp(r'^[a-z0-9_]+$').hasMatch(normalizedUsername) ||
+        normalizedUsername.length < 3) {
+      throw Exception(
+          'Username must be at least 3 characters and use a-z, 0-9, _ only');
+    }
+    if (phoneNumber.trim().isEmpty) {
+      throw Exception('Phone number is required');
+    }
+    if (age < 13 || age > 120) {
+      throw Exception('Enter a valid age');
+    }
+
+    final available =
+        await isUsernameAvailable(normalizedUsername, excludeUid: uid);
+    if (!available) {
+      throw Exception('Username already taken');
+    }
+
+    await _firestore.collection('users').doc(uid).set(
+      {
+        'uid': uid,
+        'username': normalizedUsername,
+        'phoneNumber': phoneNumber.trim(),
+        'age': age,
+        'bio': bio.trim(),
+        'profileCompleted': true,
+      },
+      SetOptions(merge: true),
+    );
   }
 
   Future<void> updateProfile({

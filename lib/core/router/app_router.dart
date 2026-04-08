@@ -1,11 +1,11 @@
 // lib/core/router/app_router.dart
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../features/auth/screens/login_screen.dart';
 import '../../features/auth/screens/register_screen.dart';
 import '../../features/feed/screens/feed_screen.dart';
 import '../../features/feed/screens/post_detail_screen.dart';
+import '../../features/profile/screens/complete_profile_screen.dart';
 import '../../features/profile/screens/profile_screen.dart';
 import '../../features/chat/screens/chat_list_screen.dart';
 import '../../features/chat/screens/chat_screen.dart';
@@ -33,6 +33,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/auth/login', builder: (_, __) => const LoginScreen()),
       GoRoute(
           path: '/auth/register', builder: (_, __) => const RegisterScreen()),
+      GoRoute(
+        path: '/complete-profile',
+        builder: (_, __) => const CompleteProfileScreen(),
+      ),
 
       // Main shell with bottom nav
       ShellRoute(

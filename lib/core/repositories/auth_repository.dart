@@ -38,6 +38,7 @@ class AuthRepository {
       email: email,
       username: username,
       displayName: displayName,
+      profileCompleted: false,
       createdAt: DateTime.now(),
     );
 
@@ -75,23 +76,14 @@ class AuthRepository {
       final doc = await _firestore.collection('users').doc(user.uid).get();
 
       if (!doc.exists) {
-        // Safely clean username — remove dots, spaces, special chars
-        final rawUsername = (user.email ?? user.uid)
-            .split('@')[0]
-            .toLowerCase()
-            .replaceAll(RegExp(r'[^a-z0-9_]'), '_');
-
-        // Ensure username is not empty
-        final username = rawUsername.isEmpty
-            ? 'user_${user.uid.substring(0, 6)}'
-            : rawUsername;
-
         final userModel = UserModel(
           uid: user.uid,
           email: user.email ?? '',
-          username: username,
-          displayName: user.displayName ?? username,
+          // Force completion flow to ask the user for a unique username.
+          username: '',
+          displayName: user.displayName ?? 'User',
           photoUrl: user.photoURL ?? '',
+          profileCompleted: false,
           createdAt: DateTime.now(),
           followers: const [],
           following: const [],
@@ -117,6 +109,7 @@ class AuthRepository {
         username: 'user_${user.uid.substring(0, 6)}',
         displayName: user.displayName ?? 'User',
         photoUrl: user.photoURL ?? '',
+        profileCompleted: false,
         createdAt: DateTime.now(),
         followers: const [],
         following: const [],

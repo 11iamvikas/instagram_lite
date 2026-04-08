@@ -1,9 +1,10 @@
 // lib/features/feed/widgets/post_card.dart
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:timeago/timeago.dart' as timeago;
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/models/post_model.dart';
+import 'post_media.dart';
 
 class PostCard extends StatelessWidget {
   final PostModel post;
@@ -63,12 +64,7 @@ class PostCard extends StatelessWidget {
             onTap: () => context.push('/post/${post.postId}'),
             child: AspectRatio(
               aspectRatio: 1,
-              child: CachedNetworkImage(
-                imageUrl: post.mediaUrl,
-                fit: BoxFit.cover,
-                placeholder: (_, __) => Container(color: Colors.grey[200]),
-                errorWidget: (_, __, ___) => const Icon(Icons.broken_image),
-              ),
+              child: PostMedia(post: post),
             ),
           ),
 

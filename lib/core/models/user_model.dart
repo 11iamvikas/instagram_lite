@@ -9,6 +9,9 @@ class UserModel extends Equatable {
   final String displayName;
   final String photoUrl;
   final String bio;
+  final String phoneNumber;
+  final int? age;
+  final bool profileCompleted;
   final List<String> followers;
   final List<String> following;
   final int postsCount;
@@ -21,6 +24,9 @@ class UserModel extends Equatable {
     required this.displayName,
     this.photoUrl = '',
     this.bio = '',
+    this.phoneNumber = '',
+    this.age,
+    this.profileCompleted = false,
     this.followers = const [],
     this.following = const [],
     this.postsCount = 0,
@@ -34,10 +40,15 @@ class UserModel extends Equatable {
         displayName: map['displayName'] ?? '',
         photoUrl: map['photoUrl'] ?? '',
         bio: map['bio'] ?? '',
+        phoneNumber: map['phoneNumber'] ?? '',
+        age: map['age'] is int
+            ? map['age'] as int
+            : (map['age'] is num ? (map['age'] as num).toInt() : null),
+        profileCompleted: map['profileCompleted'] ?? false,
         followers: List<String>.from(map['followers'] ?? []),
         following: List<String>.from(map['following'] ?? []),
         postsCount: map['postsCount'] ?? 0,
-        createdAt: (map['createdAt'] as Timestamp).toDate(),
+        createdAt: (map['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
       );
 
   Map<String, dynamic> toMap() => {
@@ -47,6 +58,9 @@ class UserModel extends Equatable {
         'displayName': displayName,
         'photoUrl': photoUrl,
         'bio': bio,
+        'phoneNumber': phoneNumber,
+        'age': age,
+        'profileCompleted': profileCompleted,
         'followers': followers,
         'following': following,
         'postsCount': postsCount,
@@ -60,6 +74,9 @@ class UserModel extends Equatable {
     String? displayName,
     String? photoUrl,
     String? bio,
+    String? phoneNumber,
+    int? age,
+    bool? profileCompleted,
     List<String>? followers,
     List<String>? following,
     int? postsCount,
@@ -71,6 +88,9 @@ class UserModel extends Equatable {
         displayName: displayName ?? this.displayName,
         photoUrl: photoUrl ?? this.photoUrl,
         bio: bio ?? this.bio,
+        phoneNumber: phoneNumber ?? this.phoneNumber,
+        age: age ?? this.age,
+        profileCompleted: profileCompleted ?? this.profileCompleted,
         followers: followers ?? this.followers,
         following: following ?? this.following,
         postsCount: postsCount ?? this.postsCount,
@@ -78,5 +98,5 @@ class UserModel extends Equatable {
       );
 
   @override
-  List<Object?> get props => [uid, email, username];
+  List<Object?> get props => [uid, email, username, profileCompleted];
 }

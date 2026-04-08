@@ -36,6 +36,16 @@ class ProfileScreen extends ConsumerWidget {
             (uid == 'me' || uid.isEmpty) ? currentUser.uid : uid;
         final isMe = resolvedUid == currentUser.uid;
 
+        if (isMe && !currentUser.profileCompleted) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!context.mounted) return;
+            context.go('/complete-profile');
+          });
+          return const Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        }
+
         return Scaffold(
           appBar: AppBar(
             title: Text(
@@ -52,39 +62,24 @@ class ProfileScreen extends ConsumerWidget {
                 ),
             ],
           ),
-          body: StreamBuilder<DocumentSnapshot>(
-            stream: FirebaseFirestore.instance
-                .collection('users')
-                .doc(resolvedUid)
-                .snapshots(),
+          body: StreamBuilder<UserModel?>(
+            stream: ref.read(userRepositoryProvider).userStream(resolvedUid),
             builder: (context, snap) {
-              if (snap.connectionState == ConnectionState.waiting) {
+              if (!snap.hasData) {
                 return const Center(child: CircularProgressIndicator());
               }
 
-              if (snap.hasError) {
-                return Center(child: Text('Error: ${snap.error}'));
+              final user = snap.data;
+              if (user == null) {
+                return const Center(child: Text('Profile not found'));
               }
 
-              if (!snap.hasData || snap.data == null || !snap.data!.exists) {
-                return const Center(
-                  child: Text('Profile not found'),
-                );
-              }
-
-              final data = snap.data!.data() as Map<String, dynamic>?;
-              if (data == null) {
-                return const Center(child: Text('No profile data'));
-              }
-
-              final user = UserModel.fromMap(data);
               final isFollowing = currentUser.following.contains(resolvedUid);
 
               return RefreshIndicator(
                 onRefresh: () async {},
                 child: CustomScrollView(
                   slivers: [
-                    // Profile header
                     SliverToBoxAdapter(
                       child: _ProfileHeader(
                         user: user,
@@ -93,16 +88,8 @@ class ProfileScreen extends ConsumerWidget {
                         currentUser: currentUser,
                       ),
                     ),
-
-                    // Divider
-                    const SliverToBoxAdapter(
-                      child: Divider(height: 1),
-                    ),
-
-                    // Posts grid header
-                    SliverToBoxAdapter(
-                      child: _PostsGrid(uid: resolvedUid),
-                    ),
+                    const SliverToBoxAdapter(child: Divider(height: 1)),
+                    SliverToBoxAdapter(child: _PostsGrid(uid: resolvedUid)),
                   ],
                 ),
               );
@@ -384,7 +371,7 @@ class _PostsGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     if (uid.isEmpty) return const SizedBox.shrink();
 
-    return StreamBuilder<QuerySnapshot>(
+    return StreamBuilder(
       stream: FirebaseFirestore.instance
           .collection('posts')
           .where('uid', isEqualTo: uid)
@@ -402,7 +389,7 @@ class _PostsGrid extends StatelessWidget {
           );
         }
 
-        final posts = snap.data!.docs
+        final posts = (snap.data! as dynamic).docs
             .map((d) => PostModel.fromMap(d.data() as Map<String, dynamic>))
             .toList();
 

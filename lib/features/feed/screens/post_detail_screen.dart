@@ -9,6 +9,7 @@ import '../../../core/models/comment_model.dart';
 import '../../../core/models/post_model.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/repositories/post_repository.dart';
+import '../widgets/post_media.dart';
 
 class PostDetailScreen extends ConsumerStatefulWidget {
   final String postId;
@@ -77,10 +78,7 @@ class _PostDetailScreenState extends ConsumerState<PostDetailScreen> {
                     SliverToBoxAdapter(
                       child: AspectRatio(
                         aspectRatio: 1,
-                        child: CachedNetworkImage(
-                          imageUrl: post.mediaUrl,
-                          fit: BoxFit.cover,
-                        ),
+                        child: PostMedia(post: post),
                       ),
                     ),
 

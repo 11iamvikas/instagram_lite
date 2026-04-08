@@ -20,28 +20,24 @@ final currentUserProvider = StreamProvider<UserModel?>((ref) {
     data: (firebaseUser) {
       if (firebaseUser == null) return Stream.value(null);
 
-      // Stream the user doc, but handle errors gracefully
-      return FirebaseAuth.instance.authStateChanges().asyncMap((user) async {
-        if (user == null) return null;
-        try {
-          final doc =
-              await ref.read(userRepositoryProvider).getUserById(user.uid);
-          return doc;
-        } catch (e) {
-          // Return a basic user model if Firestore fails
-          return UserModel(
-            uid: user.uid,
-            email: user.email ?? '',
-            username: user.email?.split('@')[0] ?? 'user',
-            displayName: user.displayName ?? 'User',
-            photoUrl: user.photoURL ?? '',
-            createdAt: DateTime.now(),
-            followers: const [],
-            following: const [],
-            postsCount: 0,
-          );
-        }
-      });
+      // Stream the Firestore user document (stable, no nested auth stream).
+      final fallback = UserModel(
+        uid: firebaseUser.uid,
+        email: firebaseUser.email ?? '',
+        username: '',
+        displayName: firebaseUser.displayName ?? 'User',
+        photoUrl: firebaseUser.photoURL ?? '',
+        createdAt: DateTime.now(),
+        followers: const [],
+        following: const [],
+        postsCount: 0,
+        profileCompleted: false,
+      );
+
+      return ref
+          .read(userRepositoryProvider)
+          .userStream(firebaseUser.uid)
+          .map((u) => u ?? fallback);
     },
   );
 });

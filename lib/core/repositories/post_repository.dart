@@ -1,15 +1,14 @@
 // lib/core/repositories/post_repository.dart
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
 import '../models/post_model.dart';
+import '../services/cloudinary_service.dart';
 //import '../models/comment_model.dart';
 
 class PostRepository {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final FirebaseStorage _storage = FirebaseStorage.instance;
   static const int _pageSize = 10;
 
   // Paginated feed query
@@ -39,10 +38,12 @@ class PostRepository {
   }
 
   Future<String> uploadMedia(File file, String postType) async {
-    final id = const Uuid().v4();
-    final ref = _storage.ref('posts/$postType/$id');
-    await ref.putFile(file);
-    return await ref.getDownloadURL();
+    final isVideo = postType == 'video';
+    return CloudinaryService.uploadFile(
+      filePath: file.path,
+      isVideo: isVideo,
+      folder: 'posts',
+    );
   }
 
   Future<PostModel> createPost({
